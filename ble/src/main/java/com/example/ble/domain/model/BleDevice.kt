@@ -25,23 +25,4 @@ data class BleDevice(
         val None = BleDevice(name = null, address = "", manufacturerData = null, bluetoothGatt = null, connectionState = STATE_DISCONNECTED)
     }
 
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (javaClass != other?.javaClass) return false
-
-        other as BleDevice
-
-        if (name != other.name) return false
-        if (address != other.address) return false
-        if (!manufacturerData.contentEquals(other.manufacturerData)) return false
-
-        return true
-    }
-
-    override fun hashCode(): Int {
-        var result = name?.hashCode() ?: 0
-        result = 31 * result + address.hashCode()
-        result = 31 * result + (manufacturerData?.contentHashCode() ?: 0)
-        return result
-    }
 }

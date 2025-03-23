@@ -10,6 +10,7 @@ import android.bluetooth.BluetoothStatusCodes
 import android.bluetooth.le.ScanCallback
 import android.content.Context
 import android.os.Build
+import android.util.Log
 import androidx.annotation.RequiresPermission
 import com.example.ble.domain.model.BleDevice
 import com.example.ble.domain.repository.BleRepository
@@ -62,11 +63,18 @@ class BleRepositoryImpl @Inject constructor(
      * Delegates the GATT connection to the system, providing our gattCallbackHandler.
      */
     @RequiresPermission(Manifest.permission.BLUETOOTH_CONNECT)
-    override fun connectToDevice(device: BleDevice) {
+    override suspend fun connectToDevice(device: BleDevice): Boolean {
         bluetoothAdapter?.getRemoteDevice(device.address)
             ?.connectGatt(context, false, gattCallbackHandler)?.let { gatt ->
+                Log.d(TAG, "Connect To Device, device name: ${device.name}")
                 _connectedDevice.value = (device.copy(bluetoothGatt = gatt, connectionState = BluetoothGatt.STATE_CONNECTING))
             }
+
+        val result = gattCallbackHandler.awaitConnect()
+        if (result) {
+            _connectedDevice.value = _connectedDevice.value.copy(connectionState = BluetoothGatt.STATE_CONNECTED)
+        }
+        return result
     }
 
     /**
@@ -75,6 +83,7 @@ class BleRepositoryImpl @Inject constructor(
     @RequiresPermission(Manifest.permission.BLUETOOTH_CONNECT)
     override fun disconnectDevice() {
         _connectedDevice.value.bluetoothGatt?.let { gatt ->
+            Log.d(TAG, "Connect To Device, device name: ${_connectedDevice.value.name}")
             gatt.disconnect()
             gatt.close()
         }
@@ -183,6 +192,7 @@ class BleRepositoryImpl @Inject constructor(
     companion object {
         // Standard UUID for Client Characteristic Configuration descriptor.
         const val CLIENT_CHARACTERISTIC_CONFIG = "00002902-0000-1000-8000-00805f9b34fb"
+        const val TAG = "BleRepositoryImpl"
     }
 
 

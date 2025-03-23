@@ -12,7 +12,7 @@ interface BleRepository {
 
     fun startScan()
     fun stopScan()
-    fun connectToDevice(device: BleDevice)
+    suspend fun connectToDevice(device: BleDevice): Boolean
     fun disconnectDevice()
     suspend fun readCharacteristic(serviceUuid: UUID, characteristicUuid: UUID): ByteArray?
     suspend fun writeCharacteristic(

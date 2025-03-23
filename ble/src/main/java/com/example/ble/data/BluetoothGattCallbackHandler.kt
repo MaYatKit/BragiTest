@@ -1,10 +1,13 @@
 package com.example.ble.data
 
 
+import android.bluetooth.BluetoothAdapter.STATE_CONNECTED
 import android.bluetooth.BluetoothGatt
 import android.bluetooth.BluetoothGattCallback
 import android.bluetooth.BluetoothGattCharacteristic
 import android.bluetooth.BluetoothGattDescriptor
+import android.util.Log
+import androidx.annotation.RequiresPermission
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
@@ -22,18 +25,33 @@ class BluetoothGattCallbackHandler : BluetoothGattCallback() {
     private var readDeferred: CompletableDeferred<ByteArray?>? = null
     private var writeDeferred: CompletableDeferred<Boolean>? = null
     private var descriptorDeferred: CompletableDeferred<Boolean>? = null
+    private var connectedDeferred: CompletableDeferred<Boolean>? = null
 
     // Shared flow to emit notification events (characteristic UUID paired with its new value)
     private val _notificationFlow = MutableSharedFlow<Pair<UUID, ByteArray>>(extraBufferCapacity = 1)
     val notificationFlow = _notificationFlow.asSharedFlow()
 
+    @RequiresPermission(android.Manifest.permission.BLUETOOTH_CONNECT)
+    override fun onConnectionStateChange(gatt: BluetoothGatt?, status: Int, newState: Int) {
+        super.onConnectionStateChange(gatt, status, newState)
+        if (newState == STATE_CONNECTED) {
+            Log.d(TAG, "Connected to device, name: ${gatt?.device?.name}")
+            connectedDeferred?.complete(true)
+            connectedDeferred = null
+            gatt?.discoverServices()
+        }
+    }
+
+    @RequiresPermission(android.Manifest.permission.BLUETOOTH_CONNECT)
     override fun onCharacteristicRead(
         gatt: BluetoothGatt,
         characteristic: BluetoothGattCharacteristic,
         status: Int
     ) {
+        super.onCharacteristicRead(gatt, characteristic, status)
         readDeferred?.let { deferred ->
             if (status == BluetoothGatt.GATT_SUCCESS) {
+                Log.d(TAG, "Characteristic Read, name : ${gatt.device.name}, characteristic value: ${characteristic.value.decodeToString()}")
                 deferred.complete(characteristic.value)
             } else {
                 deferred.completeExceptionally(Exception("Characteristic read failed with status: $status"))
@@ -42,14 +60,17 @@ class BluetoothGattCallbackHandler : BluetoothGattCallback() {
         }
     }
 
+    @RequiresPermission(android.Manifest.permission.BLUETOOTH_CONNECT)
     override fun onCharacteristicRead(
         gatt: BluetoothGatt,
         characteristic: BluetoothGattCharacteristic,
         value: ByteArray,
         status: Int
     ) {
+        super.onCharacteristicRead(gatt, characteristic, value, status)
         readDeferred?.let { deferred ->
             if (status == BluetoothGatt.GATT_SUCCESS) {
+                Log.d(TAG, "Characteristic Read, name : ${gatt.device.name}, value: ${value.decodeToString()}")
                 deferred.complete(value)
             } else {
                 deferred.completeExceptionally(Exception("Characteristic read failed with status: $status"))
@@ -58,13 +79,16 @@ class BluetoothGattCallbackHandler : BluetoothGattCallback() {
         }
     }
 
+    @RequiresPermission(android.Manifest.permission.BLUETOOTH_CONNECT)
     override fun onCharacteristicWrite(
         gatt: BluetoothGatt,
         characteristic: BluetoothGattCharacteristic,
         status: Int
     ) {
+        super.onCharacteristicWrite(gatt, characteristic, status)
         writeDeferred?.let { deferred ->
             if (status == BluetoothGatt.GATT_SUCCESS) {
+                Log.d(TAG, "Characteristic Write, name: ${gatt.device.name}")
                 deferred.complete(true)
             } else {
                 deferred.completeExceptionally(Exception("Characteristic write failed with status: $status"))
@@ -73,13 +97,16 @@ class BluetoothGattCallbackHandler : BluetoothGattCallback() {
         }
     }
 
+    @RequiresPermission(android.Manifest.permission.BLUETOOTH_CONNECT)
     override fun onDescriptorWrite(
         gatt: BluetoothGatt,
         descriptor: BluetoothGattDescriptor,
         status: Int
     ) {
+        super.onDescriptorWrite(gatt, descriptor, status)
         descriptorDeferred?.let { deferred ->
             if (status == BluetoothGatt.GATT_SUCCESS) {
+                Log.d(TAG, "DescriptorWrite Write, name: ${gatt.device.name}")
                 deferred.complete(true)
             } else {
                 deferred.completeExceptionally(Exception("Descriptor write failed with status: $status"))
@@ -94,10 +121,13 @@ class BluetoothGattCallbackHandler : BluetoothGattCallback() {
      * This callback is invoked when notifications or indications are received.
      * The new value is emitted to [notificationFlow] so that subscribers can react.
      */
+    @RequiresPermission(android.Manifest.permission.BLUETOOTH_CONNECT)
     override fun onCharacteristicChanged(
         gatt: BluetoothGatt,
         characteristic: BluetoothGattCharacteristic
     ) {
+        super.onCharacteristicChanged(gatt, characteristic)
+        Log.d(TAG, "Characteristic Changed Write, name: ${gatt.device.name}, uuid = ${characteristic.uuid}, characteristic value: ${characteristic.value.decodeToString()}")
         // Emit the characteristic's UUID and new value to the shared flow.
         _notificationFlow.tryEmit(characteristic.uuid to characteristic.value)
     }
@@ -108,13 +138,27 @@ class BluetoothGattCallbackHandler : BluetoothGattCallback() {
      * This callback is invoked when notifications or indications are received.
      * The new value is emitted to [notificationFlow] so that subscribers can react.
      */
+    @RequiresPermission(android.Manifest.permission.BLUETOOTH_CONNECT)
     override fun onCharacteristicChanged(
         gatt: BluetoothGatt,
         characteristic: BluetoothGattCharacteristic,
         value: ByteArray
     ) {
+        super.onCharacteristicChanged(gatt, characteristic, value)
+        Log.d(TAG, "Characteristic Changed Write, name: ${gatt.device.name}, uuid = ${characteristic.uuid}, value: ${value.decodeToString()}")
         // Emit the characteristic's UUID and new value to the shared flow.
         _notificationFlow.tryEmit(characteristic.uuid to value)
+    }
+
+
+    /**
+     * Awaits the result of a connection operation.
+     *
+     * @return The result of the connection operation.
+     */
+    suspend fun awaitConnect(): Boolean {
+        connectedDeferred = CompletableDeferred()
+        return connectedDeferred!!.await()
     }
 
     /**
@@ -145,5 +189,9 @@ class BluetoothGattCallbackHandler : BluetoothGattCallback() {
     suspend fun awaitDescriptorWrite(): Boolean {
         descriptorDeferred = CompletableDeferred()
         return descriptorDeferred!!.await()
+    }
+
+    companion object {
+        const val TAG = "BluetoothGattCallbackHandler"
     }
 }

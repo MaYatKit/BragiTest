@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.ble.domain.model.BleDevice
 import com.example.ble.domain.repository.BleRepository
 import com.example.ble.domain.usecase.ConnectToDeviceUseCase
+import com.example.ble.domain.usecase.DisconnectToDeviceUseCase
 import com.example.ble.domain.usecase.ReadCharacteristicUseCase
 import com.example.ble.domain.usecase.SetNotificationUseCase
 import com.example.ble.domain.usecase.StartScanUseCase
@@ -32,6 +33,7 @@ class BleViewModel @Inject constructor(
     private val startScanUseCase: StartScanUseCase,
     private val stopScanUseCase: StopScanUseCase,
     private val connectToDeviceUseCase: ConnectToDeviceUseCase,
+    private val disconnectToDeviceUseCase: DisconnectToDeviceUseCase,
     private val readCharacteristicUseCase: ReadCharacteristicUseCase,
     private val writeCharacteristicUseCase: WriteCharacteristicUseCase,
     private val setNotificationUseCase: SetNotificationUseCase,
@@ -70,9 +72,20 @@ class BleViewModel @Inject constructor(
     /**
      * Initiates connection to the given BLE device.
      */
-    fun connectToDevice(device: BleDevice) {
+    fun connectToDevice(device: BleDevice, onResult: (Boolean) -> Unit) {
         viewModelScope.launch {
-            connectToDeviceUseCase.execute(device)
+            val result = connectToDeviceUseCase.execute(device)
+            onResult(result)
+        }
+    }
+
+
+    /**
+     * Disconnects from the connected BLE device.
+     */
+    fun disConnectToDevice() {
+        viewModelScope.launch {
+            disconnectToDeviceUseCase.execute()
         }
     }
 

@@ -15,7 +15,7 @@ class ConnectToDeviceUseCase @Inject constructor(
      *
      * @param device The BLE device to connect to.
      */
-    fun execute(device: BleDevice) {
-        bleRepository.connectToDevice(device)
+    suspend fun execute(device: BleDevice): Boolean {
+        return bleRepository.connectToDevice(device)
     }
 }

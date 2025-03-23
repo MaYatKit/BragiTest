@@ -7,6 +7,7 @@ import com.example.ble.data.BluetoothGattCallbackHandler
 import com.example.ble.data.BluetoothLeScannerHandler
 import com.example.ble.domain.repository.BleRepository
 import com.example.ble.domain.usecase.ConnectToDeviceUseCase
+import com.example.ble.domain.usecase.DisconnectToDeviceUseCase
 import com.example.ble.domain.usecase.ReadCharacteristicUseCase
 import com.example.ble.domain.usecase.SetNotificationUseCase
 import com.example.ble.domain.usecase.StartScanUseCase
@@ -64,6 +65,12 @@ object BleModule {
     @Singleton
     fun provideConnectToDeviceUseCase(repository: BleRepository): ConnectToDeviceUseCase {
         return ConnectToDeviceUseCase(repository)
+    }
+
+    @Provides
+    @Singleton
+    fun provideDisconnectToDeviceUseCase(repository: BleRepository): DisconnectToDeviceUseCase {
+        return DisconnectToDeviceUseCase(repository)
     }
 
     @Provides
