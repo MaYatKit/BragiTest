@@ -1,5 +1,6 @@
 [versions]
 agp = "8.9.0"
+core = "1.6.1"
 kotlin = "2.1.10"
 coreKtx = "1.15.0"
 junit = "4.13.2"
@@ -17,6 +18,9 @@ ksp = "2.1.10-1.0.30"
 annotation = "1.9.1"
 mockito-kotlin = "5.1.0"
 mockito = "5.5.0"
+orchestrator = "1.5.1"
+runner = "1.6.2"
+truth = "1.6.0"
 
 
 
@@ -24,6 +28,12 @@ mockito = "5.5.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
+androidx-core-v = { module = "androidx.test:core", version.ref = "core" }
+androidx-junit-ktx = { module = "androidx.test.ext:junit-ktx", version.ref = "junitVersion" }
+androidx-orchestrator = { module = "androidx.test:orchestrator", version.ref = "orchestrator" }
+androidx-runner = { module = "androidx.test:runner", version.ref = "runner" }
+androidx-truth = { module = "androidx.test.ext:truth", version.ref = "truth" }
+core-ktx = { module = "androidx.test:core-ktx", version.ref = "core" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
 androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }

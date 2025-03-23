@@ -34,7 +34,6 @@ class BluetoothLeScannerHandler(private val bluetoothLeScanner: BluetoothLeScann
      */
     @RequiresPermission(Manifest.permission.BLUETOOTH_SCAN)
     fun startScan() {
-        Log.d(TAG, "-----startScan------")
         scanCallback = object : ScanCallback() {
             @RequiresPermission(Manifest.permission.BLUETOOTH_CONNECT)
             override fun onScanResult(callbackType: Int, result: ScanResult) {
@@ -44,13 +43,11 @@ class BluetoothLeScannerHandler(private val bluetoothLeScanner: BluetoothLeScann
                 manufacturerSpecificData?.getOrElse(0){ null }
 
                 val bleDevice = BleDevice(device.name, device.address, manufacturerData)
-                Log.d(TAG, "onScanResult, bleDevice: $bleDevice")
                 _scanResults.value = (_scanResults.value + bleDevice).distinctBy { it.address }
             }
 
             override fun onScanFailed(errorCode: Int) {
                 super.onScanFailed(errorCode)
-                Log.d(TAG, "onScanFailed, errorCode: $errorCode")
             }
         }
         val scanSettings: ScanSettings = ScanSettings.Builder()
@@ -65,7 +62,6 @@ class BluetoothLeScannerHandler(private val bluetoothLeScanner: BluetoothLeScann
      */
     @RequiresPermission(Manifest.permission.BLUETOOTH_SCAN)
     fun stopScan() {
-        Log.d(TAG, "-----stopScan------")
         scanCallback?.let { bluetoothLeScanner?.stopScan(it) }
         scanCallback = null
     }

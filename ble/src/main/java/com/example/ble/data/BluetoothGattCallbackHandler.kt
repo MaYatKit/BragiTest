@@ -9,8 +9,11 @@ import android.bluetooth.BluetoothGattDescriptor
 import android.util.Log
 import androidx.annotation.RequiresPermission
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.launch
 import java.util.UUID
 
 /**
@@ -35,7 +38,6 @@ class BluetoothGattCallbackHandler : BluetoothGattCallback() {
     override fun onConnectionStateChange(gatt: BluetoothGatt?, status: Int, newState: Int) {
         super.onConnectionStateChange(gatt, status, newState)
         if (newState == STATE_CONNECTED) {
-            Log.d(TAG, "Connected to device, name: ${gatt?.device?.name}")
             connectedDeferred?.complete(true)
             connectedDeferred = null
             gatt?.discoverServices()
@@ -51,7 +53,6 @@ class BluetoothGattCallbackHandler : BluetoothGattCallback() {
         super.onCharacteristicRead(gatt, characteristic, status)
         readDeferred?.let { deferred ->
             if (status == BluetoothGatt.GATT_SUCCESS) {
-                Log.d(TAG, "Characteristic Read, name : ${gatt.device.name}, characteristic value: ${characteristic.value.decodeToString()}")
                 deferred.complete(characteristic.value)
             } else {
                 deferred.completeExceptionally(Exception("Characteristic read failed with status: $status"))
@@ -70,7 +71,6 @@ class BluetoothGattCallbackHandler : BluetoothGattCallback() {
         super.onCharacteristicRead(gatt, characteristic, value, status)
         readDeferred?.let { deferred ->
             if (status == BluetoothGatt.GATT_SUCCESS) {
-                Log.d(TAG, "Characteristic Read, name : ${gatt.device.name}, value: ${value.decodeToString()}")
                 deferred.complete(value)
             } else {
                 deferred.completeExceptionally(Exception("Characteristic read failed with status: $status"))
@@ -88,7 +88,6 @@ class BluetoothGattCallbackHandler : BluetoothGattCallback() {
         super.onCharacteristicWrite(gatt, characteristic, status)
         writeDeferred?.let { deferred ->
             if (status == BluetoothGatt.GATT_SUCCESS) {
-                Log.d(TAG, "Characteristic Write, name: ${gatt.device.name}")
                 deferred.complete(true)
             } else {
                 deferred.completeExceptionally(Exception("Characteristic write failed with status: $status"))
@@ -106,7 +105,6 @@ class BluetoothGattCallbackHandler : BluetoothGattCallback() {
         super.onDescriptorWrite(gatt, descriptor, status)
         descriptorDeferred?.let { deferred ->
             if (status == BluetoothGatt.GATT_SUCCESS) {
-                Log.d(TAG, "DescriptorWrite Write, name: ${gatt.device.name}")
                 deferred.complete(true)
             } else {
                 deferred.completeExceptionally(Exception("Descriptor write failed with status: $status"))
@@ -127,7 +125,6 @@ class BluetoothGattCallbackHandler : BluetoothGattCallback() {
         characteristic: BluetoothGattCharacteristic
     ) {
         super.onCharacteristicChanged(gatt, characteristic)
-        Log.d(TAG, "Characteristic Changed Write, name: ${gatt.device.name}, uuid = ${characteristic.uuid}, characteristic value: ${characteristic.value.decodeToString()}")
         // Emit the characteristic's UUID and new value to the shared flow.
         _notificationFlow.tryEmit(characteristic.uuid to characteristic.value)
     }
@@ -145,9 +142,11 @@ class BluetoothGattCallbackHandler : BluetoothGattCallback() {
         value: ByteArray
     ) {
         super.onCharacteristicChanged(gatt, characteristic, value)
-        Log.d(TAG, "Characteristic Changed Write, name: ${gatt.device.name}, uuid = ${characteristic.uuid}, value: ${value.decodeToString()}")
         // Emit the characteristic's UUID and new value to the shared flow.
-        _notificationFlow.tryEmit(characteristic.uuid to value)
+        val success = _notificationFlow.tryEmit(characteristic.uuid to value)
+        if (!success) {
+            Log.e("BLE", "Failed to emit notification")
+        }
     }
 
 

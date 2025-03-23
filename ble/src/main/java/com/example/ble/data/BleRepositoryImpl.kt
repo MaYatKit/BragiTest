@@ -66,7 +66,6 @@ class BleRepositoryImpl @Inject constructor(
     override suspend fun connectToDevice(device: BleDevice): Boolean {
         bluetoothAdapter?.getRemoteDevice(device.address)
             ?.connectGatt(context, false, gattCallbackHandler)?.let { gatt ->
-                Log.d(TAG, "Connect To Device, device name: ${device.name}")
                 _connectedDevice.value = (device.copy(bluetoothGatt = gatt, connectionState = BluetoothGatt.STATE_CONNECTING))
             }
 
@@ -83,7 +82,6 @@ class BleRepositoryImpl @Inject constructor(
     @RequiresPermission(Manifest.permission.BLUETOOTH_CONNECT)
     override fun disconnectDevice() {
         _connectedDevice.value.bluetoothGatt?.let { gatt ->
-            Log.d(TAG, "Connect To Device, device name: ${_connectedDevice.value.name}")
             gatt.disconnect()
             gatt.close()
         }
