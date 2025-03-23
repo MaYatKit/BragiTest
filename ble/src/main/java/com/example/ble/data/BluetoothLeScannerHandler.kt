@@ -8,6 +8,7 @@ import android.bluetooth.le.ScanSettings
 import android.util.Log
 import androidx.annotation.RequiresPermission
 import androidx.core.util.getOrElse
+import androidx.core.util.isNotEmpty
 import com.example.ble.domain.model.BleDevice
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -39,8 +40,8 @@ class BluetoothLeScannerHandler(private val bluetoothLeScanner: BluetoothLeScann
             override fun onScanResult(callbackType: Int, result: ScanResult) {
                 super.onScanResult(callbackType, result)
                 val device = result.device
-                val manufacturerData = result.scanRecord?.
-                manufacturerSpecificData?.getOrElse(0){ null }
+                val data = result.scanRecord?.manufacturerSpecificData
+                val manufacturerData = if (data != null && data.isNotEmpty()) data.valueAt(0) else null
 
                 val bleDevice = BleDevice(device.name, device.address, manufacturerData)
                 _scanResults.value = (_scanResults.value + bleDevice).distinctBy { it.address }
@@ -50,11 +51,7 @@ class BluetoothLeScannerHandler(private val bluetoothLeScanner: BluetoothLeScann
                 super.onScanFailed(errorCode)
             }
         }
-        val scanSettings: ScanSettings = ScanSettings.Builder()
-            .setCallbackType(ScanSettings.CALLBACK_TYPE_ALL_MATCHES)
-            .setScanMode(ScanSettings.SCAN_MODE_BALANCED)
-            .build()
-        bluetoothLeScanner?.startScan(null, scanSettings, scanCallback)
+        bluetoothLeScanner?.startScan(scanCallback)
     }
 
     /**
