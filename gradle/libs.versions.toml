@@ -18,6 +18,7 @@ ksp = "2.1.10-1.0.30"
 annotation = "1.9.1"
 mockito-kotlin = "5.1.0"
 mockito = "5.5.0"
+mockitoInline = "5.1.0"
 orchestrator = "1.5.1"
 runner = "1.6.2"
 truth = "1.6.0"
@@ -64,6 +65,7 @@ androidx-annotation = { group = "androidx.annotation", name = "annotation", vers
 
 # Mockito
 mockito-core = { module = "org.mockito:mockito-core", version.ref = "mockito" }
+mockito-inline = { module = "org.mockito:mockito-inline", version.ref = "mockitoInline" }
 mockito-kotlin = { module = "org.mockito.kotlin:mockito-kotlin", version.ref = "mockito-kotlin" }
 
 [plugins]
